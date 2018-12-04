@@ -1,21 +1,3 @@
-
-// HC-SR04 ultrasonic rangefinder demo
-// Popular code uses pulseIn to measure echo pulse, pulseIn is a blocking function
-// Using interrupts for reading the incoming pulse is better approach because it won't stall your main program
-// You are welcome to use this code for the project
-// You might need to do additional calibration and data filtering
-// Note sources of innacuracies of some components like micros(). It has a small error, check online why this happens
-
-// Pinout:
-// VCC (5VDC)
-// GND (return)
-// TRIG (trigger input)
-// ECHO (echo output)
-
-// For sensor operation refer to datasheet:
-// https://www.mouser.com/ds/2/813/HCSR04-1022824.pdf
-
-
 #define TRIG PD2  // trigger pin
 #define ECHO PD3  // echo output
 
@@ -26,10 +8,38 @@ unsigned long pulseTime;          // difference between riseTime and fallTime
 unsigned long distance;           // our range
 
 float getDistance();
+int speakerPin = 9;
+int length = 15; // the number of notes
+char notes[] = "ccggaagffeeddc "; // a space represents a rest
+int beats[] = { 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 4 };
+int tempo = 300;
+
+void playTone(int tone, int duration) {
+  for (long i = 0; i < duration * 1000L; i += tone * 2) {
+    digitalWrite(speakerPin, HIGH);
+    delayMicroseconds(tone);
+    digitalWrite(speakerPin, LOW);
+    delayMicroseconds(tone);
+  }
+}
+
+void playNote(char note, int duration) {
+  char names[] = { 'c', 'd', 'e', 'f', 'g', 'a', 'b', 'C' };
+  int tones[] = { 1915, 1700, 1519, 1432, 1275, 1136, 1014, 956 };
+  
+  // play the tone corresponding to the note name
+  for (int i = 0; i < 8; i++) {
+    if (names[i] == note) {
+      playTone(tones[i], duration);
+    }
+  }
+}
 
 void setup() 
 {
   Serial.begin(9600);
+
+  pinMode(speakerPin, OUTPUT);
 
   // Setting direction for trig and echo pins
   DDRD |= (1<<TRIG);
@@ -44,6 +54,15 @@ void loop()
 {
   float range = getDistance();
   Serial.println(range);
+
+  // Measures objects closer than half a meter
+  if (range < 50) {
+    playNote(notes[0], beats[0] * tempo);
+  }
+  else {
+    playNote(notes[0], beats[0] * tempo);
+    delay(1000);
+  }
 }
 
 // function to calculate the distance
@@ -64,6 +83,8 @@ float getDistance()
   // to object and back so the incoming pulse is twice longer
   distance = pulseTime*0.0343/2; // result in cm 
   return distance;
+
+  
 }
 
 // Interrupt service vector for pin change:
