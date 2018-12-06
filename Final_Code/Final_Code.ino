@@ -9,6 +9,7 @@ unsigned long distance;           // our range
 
 float getDistance();
 int speakerPin = 9;
+int speakerPin2 = 10;
 int length = 15; // the number of notes
 char notes[] = "ccggaagffeeddc "; // a space represents a rest
 int beats[] = { 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 2, 4 };
@@ -17,29 +18,21 @@ int tempo = 300;
 void playTone(int tone, int duration) {
   for (long i = 0; i < duration * 1000L; i += tone * 2) {
     digitalWrite(speakerPin, HIGH);
+    digitalWrite(speakerPin2, HIGH);
     delayMicroseconds(tone);
     digitalWrite(speakerPin, LOW);
+    digitalWrite(speakerPin2, LOW);
     delayMicroseconds(tone);
   }
 }
 
-void playNote(char note, int duration) {
-  char names[] = { 'c', 'd', 'e', 'f', 'g', 'a', 'b', 'C' };
-  int tones[] = { 1915, 1700, 1519, 1432, 1275, 1136, 1014, 956 };
-  
-  // play the tone corresponding to the note name
-  for (int i = 0; i < 8; i++) {
-    if (names[i] == note) {
-      playTone(tones[i], duration);
-    }
-  }
-}
 
 void setup() 
 {
   Serial.begin(9600);
 
   pinMode(speakerPin, OUTPUT);
+  pinMode(speakerPin2, OUTPUT);
 
   // Setting direction for trig and echo pins
   DDRD |= (1<<TRIG);
@@ -48,20 +41,19 @@ void setup()
   // Setting up pin change interrupt for echo (PD3), PCINT19
   PCICR = (1<<PCIE2); // only enabling PCIE2, because PCIE2 constains PCINT[23:16]
   PCMSK2 = (1<<PCINT19); // only enabling PCINT19  
+  
 }
+
 
 void loop() 
 {
   float range = getDistance();
   Serial.println(range);
 
-  // Measures objects closer than half a meter
-  if (range < 50) {
-    playNote(notes[0], beats[0] * tempo);
-  }
-  else {
-    playNote(notes[0], beats[0] * tempo);
-    delay(1000);
+  // Measures objects closer than 2 meters
+  if (range < 200) {
+     playTone(1915, range);
+     delay(range*5);
   }
 }
 
@@ -83,15 +75,17 @@ float getDistance()
   // to object and back so the incoming pulse is twice longer
   distance = pulseTime*0.0343/2; // result in cm 
   return distance;
-
   
 }
+
+
 
 // Interrupt service vector for pin change:
 // ISR (PCINT0_vect) pin change interrupt for D8 to D13
 // ISR (PCINT1_vect) pin change interrupt for A0 to A5
 // ISR (PCINT2_vect) pin change interrupt for D0 to D7
 // We need PCINT2_vect because we are using PD3 as input (echo)
+
 ISR(PCINT2_vect)
 {  
   if ((PIND & (1<<ECHO)) == (1<<ECHO)) // check if pin PD3 is high
