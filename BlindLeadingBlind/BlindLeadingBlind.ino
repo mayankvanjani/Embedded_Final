@@ -1,3 +1,11 @@
+/*
+ * Embedded Project
+ * Mayank Vanjani, 
+ * 
+ * 
+*/
+
+
 #define TRIG PD2    // trigger pin 2
 #define ECHO PD3    // echo output 3
 #define TRIG2 PB4   // trigger pin 12
