@@ -1,12 +1,21 @@
-#define TRIG PD2  // trigger pin 2
-#define ECHO PD3  // echo output 3
+#define TRIG PD2    // trigger pin 2
+#define ECHO PD3    // echo output 3
+#define TRIG2 PB4   // trigger pin 12
+#define ECHO2 PB5   // echo output 13
 
 volatile unsigned long riseTime;  // timestamp when echo signal goes high
 volatile unsigned long fallTime;  // timestamp when echo signal goes low
 unsigned long pulseTime;          // difference between riseTime and fallTime
 unsigned long distance;           // range
 
+volatile unsigned long riseTime2;  
+volatile unsigned long fallTime2;  
+unsigned long pulseTime2;          
+unsigned long distance2;  
+bool check = true;         
+
 float getDistance();
+float getDistance2();
 int speakerPin = 9;
 int speakerPin2 = 10;
 int buzzerPin = 11;
@@ -14,20 +23,22 @@ int buzzerPin = 11;
 void playTone(int tone, int duration) {
   for (long i = 0; i < duration * 1000L; i += tone * 2) {
     digitalWrite(speakerPin, HIGH);
-    // digitalWrite(speakerPin2, HIGH);
+    digitalWrite(speakerPin2, HIGH);
     delayMicroseconds(tone);
     digitalWrite(speakerPin, LOW);
-    // digitalWrite(speakerPin2, LOW);
+    digitalWrite(speakerPin2, LOW);
     delayMicroseconds(tone);
   }
 }
 
 
 
-void setup() 
-{
+// ---------- SETUP ---------- //
+void setup() {
   Serial.begin(9600);
 
+  // pinMode(13, OUTPUT);
+  
   pinMode(speakerPin, OUTPUT);
   pinMode(speakerPin2, OUTPUT);
   pinMode(buzzerPin, OUTPUT);
@@ -36,21 +47,30 @@ void setup()
   DDRD |= (1<<TRIG);
   DDRD &= ~(1<<ECHO);
 
+  DDRB |= (1<<TRIG2);
+  DDRB &= ~(1<<ECHO2);
+
   // Setting up pin change interrupt for echo (PD3), PCINT19
   PCICR = (1<<PCIE2);    // only enabling PCIE2, because PCIE2 constains PCINT[23:16]
   PCMSK2 = (1<<PCINT19); // only enabling PCINT19  
-  
+
+  PCICR != (1<<PCIE0);    // only enabling PCIE0, because PCIE0 constains PCINT[7:0]
+  PCMSK0 != (1<<PCINT5);
 }
 
 
 
-void loop() 
-{
-  float range = getDistance();
-  Serial.println(range);
+// ---------- LOOP ---------- //
+void loop() {
 
-  // Measures objects closer than 3 meters
+  float range = getDistance();
+  float range2 = getDistance2();
+  Serial.print(range);
+  Serial.print("\t\t\t");
+  Serial.println(range2);
   
+  // Measures objects closer than 3 meters
+  /*
   if (range < 50) {
     playTone(1915, range);
     digitalWrite(buzzerPin, HIGH);
@@ -62,11 +82,12 @@ void loop()
     playTone(1915, range);
     delay(range*5);
   }
+  */
 }
 
 
-float getDistance()
-{
+
+float getDistance() {
   // clear trig pin
   PORTD &= ~(1<<TRIG);
   delayMicroseconds(2);
@@ -82,7 +103,18 @@ float getDistance()
   // to object and back so the incoming pulse is twice longer
   distance = pulseTime*0.0343/2; // result in cm 
   return distance;
+}
+
+float getDistance2() {
+  PORTD &= ~(1<<TRIG2);
+  delayMicroseconds(2);
   
+  PORTD = (1<<TRIG2);
+  delayMicroseconds(10);
+  PORTD &= ~(1<<TRIG2);
+  
+  distance2 = pulseTime2*0.0343/2; // result in cm 
+  return distance2;
 }
 
 
@@ -92,17 +124,60 @@ float getDistance()
 // ISR (PCINT1_vect) pin change interrupt for A0 to A5
 // ISR (PCINT2_vect) pin change interrupt for D0 to D7
 // We need PCINT2_vect because we are using PD3 as input (echo)
+
 ISR(PCINT2_vect)
-{  
-  if ((PIND & (1<<ECHO)) == (1<<ECHO)) // check if pin PD3 is high
+{ 
+ 
+  if ( (PIND & (1<<ECHO)) == (1<<ECHO) ) {
+        riseTime = micros(); // micros() calculates the run time in us since the program's start
+        }
+  
+  /*
+  if ( ((PIND & (1<<ECHO)) == (1<<ECHO)) || ((PIND & (1<<ECHO2)) == (1<<ECHO2)) ) // check if pin PD3 is high
     { // Measure time when echo pin goes high
-      riseTime = micros(); // micros() calculates the run time in us since the program's start
-    }    
-  else 
-    {
+      if ( (PIND & (1<<ECHO)) == (1<<ECHO) ) {
+        riseTime = micros(); // micros() calculates the run time in us since the program's start
+        check = true;
+      }
+      
+      else if ( (PIND & (1<<ECHO2)) == (1<<ECHO2) ) {
+        riseTime2 = micros(); 
+        check = false;
+      }
+      
+    }  
+  */
+  else {
       // measure the time when echo pin goes low
+
       fallTime = micros();
       pulseTime = fallTime - riseTime; // this is our echo pulse, its length is proportional to the measured distance
+      /*  
+      if (check) {
+        fallTime = micros();
+        pulseTime = fallTime - riseTime; // this is our echo pulse, its length is proportional to the measured distance
+      }
+      if (!check) {
+        // Serial.print("here");
+        fallTime2 = micros();
+        pulseTime2 = fallTime2 - riseTime2;
+      }
+      */
     }
+}
+
+ISR(PCINT0_vect) { 
+  Serial.print("change");
+   
+  if ( (PIND & (1<<ECHO)) == (1<<ECHO) ) {
+    riseTime2 = micros(); // micros() calculates the run time in us since the program's start
+  }
+  
+  else {
+    // measure the time when echo pin goes low
+    fallTime2 = micros();
+    pulseTime2 = fallTime2 - riseTime2; // this is our echo pulse, its length is proportional to the measured distance
+  }
+  
 }
 
