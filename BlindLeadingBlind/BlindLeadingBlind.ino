@@ -12,7 +12,6 @@ volatile unsigned long riseTime2;
 volatile unsigned long fallTime2;  
 unsigned long pulseTime2;          
 unsigned long distance2;  
-bool check = true;         
 
 float getDistance();
 float getDistance2();
@@ -37,7 +36,7 @@ void playTone(int tone, int duration) {
 void setup() {
   Serial.begin(9600);
 
-  // pinMode(13, OUTPUT);
+  pinMode(13, OUTPUT);
   
   pinMode(speakerPin, OUTPUT);
   pinMode(speakerPin2, OUTPUT);
@@ -51,11 +50,11 @@ void setup() {
   DDRB &= ~(1<<ECHO2);
 
   // Setting up pin change interrupt for echo (PD3), PCINT19
-  PCICR = (1<<PCIE2);    // only enabling PCIE2, because PCIE2 constains PCINT[23:16]
+  PCICR |= (1<<PCIE2);    // only enabling PCIE2, because PCIE2 constains PCINT[23:16]
   PCMSK2 = (1<<PCINT19); // only enabling PCINT19  
 
-  PCICR != (1<<PCIE0);    // only enabling PCIE0, because PCIE0 constains PCINT[7:0]
-  PCMSK0 != (1<<PCINT5);
+  PCICR |= (1<<PCIE0);    // only enabling PCIE0, because PCIE0 constains PCINT[7:0]
+  PCMSK0 = (1<<PCINT5);
 }
 
 
@@ -70,6 +69,25 @@ void loop() {
   Serial.println(range2);
   
   // Measures objects closer than 3 meters
+  
+  if (range < 300) {
+    playTone(1915, range);
+    delay(range*5);
+  }
+  
+  if (range2 < 50) {
+    // digitalWrite(13, HIGH);
+    digitalWrite(buzzerPin, HIGH);
+    delay( (50*5) - (range2*5) );
+    digitalWrite(buzzerPin, LOW);
+    // digitalWrite(13, LOW);
+  }
+  
+  else {
+    digitalWrite(buzzerPin, LOW);
+    digitalWrite(13, HIGH);
+  }
+  
   /*
   if (range < 50) {
     playTone(1915, range);
@@ -106,12 +124,12 @@ float getDistance() {
 }
 
 float getDistance2() {
-  PORTD &= ~(1<<TRIG2);
+  PORTB &= ~(1<<TRIG2);
   delayMicroseconds(2);
   
-  PORTD = (1<<TRIG2);
+  PORTB = (1<<TRIG2);
   delayMicroseconds(10);
-  PORTD &= ~(1<<TRIG2);
+  PORTB &= ~(1<<TRIG2);
   
   distance2 = pulseTime2*0.0343/2; // result in cm 
   return distance2;
@@ -119,62 +137,35 @@ float getDistance2() {
 
 
 
+
+
 // Interrupt service vector for pin change:
 // ISR (PCINT0_vect) pin change interrupt for D8 to D13
 // ISR (PCINT1_vect) pin change interrupt for A0 to A5
 // ISR (PCINT2_vect) pin change interrupt for D0 to D7
-// We need PCINT2_vect because we are using PD3 as input (echo)
+// We need PCINT2/0_vect because we are using PD3 and PB5 as input (echo)
 
-ISR(PCINT2_vect)
-{ 
+ISR(PCINT2_vect) {
  
   if ( (PIND & (1<<ECHO)) == (1<<ECHO) ) {
         riseTime = micros(); // micros() calculates the run time in us since the program's start
-        }
+  }
   
-  /*
-  if ( ((PIND & (1<<ECHO)) == (1<<ECHO)) || ((PIND & (1<<ECHO2)) == (1<<ECHO2)) ) // check if pin PD3 is high
-    { // Measure time when echo pin goes high
-      if ( (PIND & (1<<ECHO)) == (1<<ECHO) ) {
-        riseTime = micros(); // micros() calculates the run time in us since the program's start
-        check = true;
-      }
-      
-      else if ( (PIND & (1<<ECHO2)) == (1<<ECHO2) ) {
-        riseTime2 = micros(); 
-        check = false;
-      }
-      
-    }  
-  */
   else {
       // measure the time when echo pin goes low
-
       fallTime = micros();
       pulseTime = fallTime - riseTime; // this is our echo pulse, its length is proportional to the measured distance
-      /*  
-      if (check) {
-        fallTime = micros();
-        pulseTime = fallTime - riseTime; // this is our echo pulse, its length is proportional to the measured distance
-      }
-      if (!check) {
-        // Serial.print("here");
-        fallTime2 = micros();
-        pulseTime2 = fallTime2 - riseTime2;
-      }
-      */
     }
+    
 }
 
 ISR(PCINT0_vect) { 
-  Serial.print("change");
    
-  if ( (PIND & (1<<ECHO)) == (1<<ECHO) ) {
+  if ( (PINB & (1<<ECHO2)) == (1<<ECHO2) ) {
     riseTime2 = micros(); // micros() calculates the run time in us since the program's start
   }
   
   else {
-    // measure the time when echo pin goes low
     fallTime2 = micros();
     pulseTime2 = fallTime2 - riseTime2; // this is our echo pulse, its length is proportional to the measured distance
   }
