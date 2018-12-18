@@ -1,8 +1,8 @@
 /*
  * Embedded Project
- * Mayank Vanjani, 
- * 
- * 
+ * Mayank Vanjani, Aulon Ibrahimi, Mohammed Quadir
+ * Blind Leading the Blind
+ * Arduino Blind Guidance Kit
 */
 
 
@@ -71,18 +71,34 @@ void setup() {
 void loop() {
 
   float range = getDistance();
-  float range2 = getDistance2();
-  Serial.print(range);
+  // float range2 = getDistance2();
+  Serial.println(range);
   Serial.print("\t\t\t");
-  Serial.println(range2);
+  // Serial.println(range2);
   
   // Measures objects closer than 3 meters
+  // playTone((range)*25, 100);
   
-  if (range < 300) {
-    playTone(1915, range);
-    delay(range*5);
+  if (range < 100) {
+    // playTone((range+1), 100);
+    playTone( (range+100) , 100);
+    
+    if (range < 50) {
+      digitalWrite(buzzerPin, HIGH);
+      delay( (50*5) - (range*5) );
+      digitalWrite(buzzerPin, LOW);
+    }
+    // delay(min(0,range-50));
+    
   }
   
+  /*
+  if (range < 300) {
+    playTone(range+150, 100);
+    delay(range*5);
+  }
+  */
+  /*
   if (range2 < 50) {
     // digitalWrite(13, HIGH);
     digitalWrite(buzzerPin, HIGH);
@@ -95,6 +111,7 @@ void loop() {
     digitalWrite(buzzerPin, LOW);
     digitalWrite(13, HIGH);
   }
+  */
   
   /*
   if (range < 50) {
