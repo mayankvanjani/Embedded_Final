@@ -5,28 +5,32 @@
  * Arduino Blind Guidance Kit
 */
 
-
+// Arduion Pin Configuration for Hardwiring
 #define TRIG PD2    // trigger pin 2
 #define ECHO PD3    // echo output 3
 #define TRIG2 PB4   // trigger pin 12
 #define ECHO2 PB5   // echo output 13
 
+int speakerPin = 9;    // Arduino Pin 9
+int speakerPin2 = 10;  // Arduino Pin 10
+int buzzerPin = 11;    // Arduino Pin 11
+
+// Ultrasonic Sensor Variable Setup
+// Ultrasonic Sensor: https://www.adafruit.com/product/3942
+float getDistance();
 volatile unsigned long riseTime;  // timestamp when echo signal goes high
 volatile unsigned long fallTime;  // timestamp when echo signal goes low
 unsigned long pulseTime;          // difference between riseTime and fallTime
 unsigned long distance;           // range
 
+float getDistance2();
 volatile unsigned long riseTime2;  
 volatile unsigned long fallTime2;  
 unsigned long pulseTime2;          
 unsigned long distance2;  
 
-float getDistance();
-float getDistance2();
-int speakerPin = 9;
-int speakerPin2 = 10;
-int buzzerPin = 11;
-
+// Buzzer Activation Code for Varying Frequencies
+// PiezoBuzzer: https://www.adafruit.com/product/160
 void playTone(int tone, int duration) {
   for (long i = 0; i < duration * 1000L; i += tone * 2) {
     digitalWrite(speakerPin, HIGH);
@@ -44,13 +48,15 @@ void playTone(int tone, int duration) {
 void setup() {
   Serial.begin(9600);
 
-  pinMode(13, OUTPUT);
+  // LED Testing
+  // pinMode(13, OUTPUT);
   
   pinMode(speakerPin, OUTPUT);
   pinMode(speakerPin2, OUTPUT);
   pinMode(buzzerPin, OUTPUT);
 
-  // Setting direction for trig and echo pins
+
+  // Setting direction for TRIG and ECHO pins
   DDRD |= (1<<TRIG);
   DDRD &= ~(1<<ECHO);
 
@@ -70,11 +76,12 @@ void setup() {
 // ---------- LOOP ---------- //
 void loop() {
 
+  // Seperate Ultrasonic Ranges
   float range = getDistance();
-  // float range2 = getDistance2();
+  float range2 = getDistance2();
   Serial.println(range);
   Serial.print("\t\t\t");
-  // Serial.println(range2);
+  Serial.println(range2);
   
   // Measures objects closer than 3 meters
   // playTone((range)*25, 100);
@@ -82,15 +89,15 @@ void loop() {
   if (range < 100) {
     // playTone((range+1), 100);
     playTone( (range+100) , 100);
-    
-    if (range < 50) {
-      digitalWrite(buzzerPin, HIGH);
-      delay( (50*5) - (range*5) );
-      digitalWrite(buzzerPin, LOW);
-    }
-    // delay(min(0,range-50));
-    
   }
+    
+  if (range2 < 100) {
+    digitalWrite(buzzerPin, HIGH);
+    delay( (50*5) - (range2*5) );
+    digitalWrite(buzzerPin, LOW);
+  }
+    // delay(min(0,range-50));
+   
   
   /*
   if (range < 300) {
@@ -129,7 +136,7 @@ void loop() {
 }
 
 
-
+// getDistance and PCI Interrupt Code for Ultrasonic Sensor provided by Dmytro Moyseyev (Embedded TA)
 float getDistance() {
   // clear trig pin
   PORTD &= ~(1<<TRIG);
@@ -159,8 +166,6 @@ float getDistance2() {
   distance2 = pulseTime2*0.0343/2; // result in cm 
   return distance2;
 }
-
-
 
 
 
