@@ -74,6 +74,8 @@ void setup() {
 
 
 // ---------- LOOP ---------- //
+// Uses Buzzer Pin for haptic feedback
+// Vibrating Disc: https://www.adafruit.com/product/1201
 void loop() {
 
   // Seperate Ultrasonic Ranges
