@@ -3,6 +3,7 @@
  * Mayank Vanjani, Aulon Ibrahimi, Mohammed Quadir
  * Blind Leading the Blind
  * Arduino Blind Guidance Kit
+ * Group 17: Team Iron Men
 */
 
 // Arduion Pin Configuration for Hardwiring
@@ -93,48 +94,14 @@ void loop() {
     playTone( (range+100) , 100);
   }
     
-  if (range2 < 100) {
+  if (range2 < 50) {
     digitalWrite(buzzerPin, HIGH);
-    delay( (50*5) - (range2*5) );
+    delay( (100*5) - (range2*5) );
+    // delay(range2*5);
     digitalWrite(buzzerPin, LOW);
   }
     // delay(min(0,range-50));
    
-  
-  /*
-  if (range < 300) {
-    playTone(range+150, 100);
-    delay(range*5);
-  }
-  */
-  /*
-  if (range2 < 50) {
-    // digitalWrite(13, HIGH);
-    digitalWrite(buzzerPin, HIGH);
-    delay( (50*5) - (range2*5) );
-    digitalWrite(buzzerPin, LOW);
-    // digitalWrite(13, LOW);
-  }
-  
-  else {
-    digitalWrite(buzzerPin, LOW);
-    digitalWrite(13, HIGH);
-  }
-  */
-  
-  /*
-  if (range < 50) {
-    playTone(1915, range);
-    digitalWrite(buzzerPin, HIGH);
-    delay(range*5);
-    digitalWrite(buzzerPin, LOW);
-  }
-    
-  if (range < 300) {
-    playTone(1915, range);
-    delay(range*5);
-  }
-  */
 }
 
 
